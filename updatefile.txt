@@ -1,0 +1,18 @@
+"Updater"
+{
+	"Information"
+	{
+		"Version"
+		{
+			"Latest"	"0.3.3"
+		}
+		
+		"Notes"	"More info @ www.podval.pro"
+	}
+	
+	"Files"
+	{
+		"Plugin"	"Path_SM/plugins/warmod.smx"
+		"Source"	"Path_SM/scripting/warmod.sp"
+	}
+}
