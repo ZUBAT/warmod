@@ -4,7 +4,7 @@
 	{
 		"Version"
 		{
-			"Latest"	"0.3.3"
+			"Latest"	"0.3.6"
 		}
 		
 		"Notes"	"More info @ www.podval.pro"
@@ -14,5 +14,8 @@
 	{
 		"Plugin"	"Path_SM/plugins/warmod.smx"
 		"Source"	"Path_SM/scripting/warmod.sp"
+		"Plugin"	"Path_SM/translations/warmod.phrases.txt"
+		"Plugin"	"Path_SM/translations/ru/warmod.phrases.txt"
+		"Plugin"	"Path_SM/config/map_pool.cfg"
 	}
 }

@@ -1,6 +1,7 @@
 #pragma semicolon 1
 
 #include <sourcemod>
+
 #include <sdktools>
 #include <geoip>
 #include <cstrike>
@@ -188,9 +189,15 @@ new Handle:g_h_stored_timer_v = INVALID_HANDLE;
 /* admin menu */
 new Handle:g_h_menu = INVALID_HANDLE;
 
+/* Cherk Map*/
+
+new com_ct;		// Переменная для индекса командира контров
+new	com_t;		// Переменная для индекса командира теров
+new	Handle:hArr;	// Хендл для хранения нашего массива со списком карт
+
 /* Plugin info */
 #define UPDATE_URL				"https://raw.githubusercontent.com/ZUBAT/warmod/master/updatefile.txt"
-#define WM_VERSION				"0.3.3"
+#define WM_VERSION				"0.3.6-dev"
 #define WM_DESCRIPTION			"An automative service for CS:GO competition matches"
 
 public Plugin:myinfo = {
@@ -260,6 +267,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_score", ShowScore, "Shows score to client");
 	RegConsoleCmd("sm_s", ShowScore, "Shows score to client");
 	RegConsoleCmd("sm_stay", Stay, "Stay command for knife round");
+	RegConsoleCmd("sm_cherk", Cherk, "Cherk Map command for knife round");
 	RegConsoleCmd("sm_switch", Switch, "Switch command for knife round");
 	RegConsoleCmd("sm_pause", Pause, "Pauses the match");
 	RegConsoleCmd("sm_unpause", Unpause, "Resumes the match");
@@ -361,7 +369,7 @@ public OnPluginStart()
 	g_h_save_file_dir = CreateConVar("wm_save_dir", "warmod", "Directory to store SourceTV demos and WarMod logs");
 	g_h_prefix_logs = CreateConVar("wm_prefix_logs", "1", "Enable or disable the prefixing of \"_\" to uncompleted match SourceTV demos and WarMod logs", FCVAR_NOTIFY);
 	g_h_warmup_respawn = CreateConVar("wm_warmup_respawn", "0", "Enable or disable the respawning of players in warmup", FCVAR_NOTIFY);
-	g_h_chat_prefix = CreateConVar("wm_chat_prefix", "WarMod_BFG", "Change the chat prefix. Default is WarMod_BFG", FCVAR_PROTECTED);
+	g_h_chat_prefix = CreateConVar("wm_chat_prefix", "WarMod", "Change the chat prefix. Default is WarMod_BFG", FCVAR_PROTECTED);
 	CreateConVar("wm_version_notify", WM_VERSION, WM_DESCRIPTION, FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 	g_hCvarEnabled = CreateConVar("wm_autodemoupload_enable", "1", "Automatically upload demos when finished recording.", FCVAR_NOTIFY|FCVAR_PLUGIN, true, 0.0, true, 1.0);
 	g_hCvarBzip = CreateConVar("wm_autodemoupload_bzip2", "9", "Compression level. If set > 0 demos will be compressed before uploading. (Requires bzip2 extension.)", FCVAR_PLUGIN, true, 0.0, true, 9.0);
@@ -473,6 +481,40 @@ public OnConfigsExecuted()
 	g_UploadOnMatchCompleted = GetConVarBool(g_hOnMatchCompleted);
 	GetConVarString(g_hCvarFtpTargetDemo, g_sFtpTargetDemo, sizeof(g_sFtpTargetDemo));
 	GetConVarString(g_hCvarFtpTargetLog, g_sFtpTargetLog, sizeof(g_sFtpTargetLog));
+	/* CHERK MAP BEGIN*/
+	decl String:sBuffer[PLATFORM_MAX_PATH];
+	BuildPath(Path_SM, sBuffer, sizeof(sBuffer), "configs/map_pool.cfg"); // Типа буфер для файла....
+	if (!FileExists(sBuffer, false))	// Проверяем есть ли такой файл. Если нет то - return
+	{
+		return;
+	}
+	new Handle:hFile = OpenFile(sBuffer, "r"), iBuffer;
+	hArr = CreateArray(32);	// здесь мы создаем наш заветный массив
+	if (hFile == INVALID_HANDLE) // если файл не открылся ...
+	{
+		SetFailState("%s not parsed... file doesn't exist!", sBuffer);	// ... то останавливаем плагин
+	}
+	else	// если открылся
+	{
+		while (!IsEndOfFile(hFile))	// читаем файл до конца
+		{
+			if (!ReadFileLine(hFile, sBuffer, sizeof(sBuffer)))	// если не прочитал строку, переходим к следующей
+			{
+				continue;
+			}
+			iBuffer = StrContains((sBuffer), "//", true);  // проверяем есть ли в строке символы "//"
+			if (iBuffer != -1)	// если есть то..
+			{
+				sBuffer[iBuffer] = '\0';	//.. убираем их
+			}
+			TrimString(sBuffer);	// убираем пробелы со всех краев строки
+			if (IsMapValid(sBuffer))		// проверяем валидность карты
+				PushArrayString(hArr, sBuffer); // если валидна, то добавляем строку с названием карты в массив
+			// PrintToServer("%s",sBuffer);		// принт того что добавилось в массив
+		}
+		CloseHandle(hFile);		// убиваем хендл 
+	}
+	/*CHERK MAP END*/
 }
 
 public OnMapStart()
@@ -1112,13 +1154,13 @@ public Action:Unpause(client, args)
 			if (GetClientTeam(client) == 3 && g_pause_offered_ct == false && g_pause_offered_t == false)
 			{
 				g_pause_offered_ct = true;
-				PrintToConsoleAll("<WarMod_BFG> CT have asked to unpause the game. Please type /unpause to unpause the match.");
+				PrintToConsoleAll("<WarMod> CT have asked to unpause the game. Please type /unpause to unpause the match.");
 				PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %s %T", CHAT_PREFIX, g_ct_name, "Unpause Offer", LANG_SERVER);
 			}
 			else if (GetClientTeam(client) == 2 && g_pause_offered_t == false && g_pause_offered_ct == false)
 			{
 				g_pause_offered_t = true;
-				PrintToConsoleAll("<WarMod_BFG> T have asked to unpause the game. Please type /unpause to unpause the match.");
+				PrintToConsoleAll("<WarMod> T have asked to unpause the game. Please type /unpause to unpause the match.");
 				PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %s %T", CHAT_PREFIX, g_t_name, "Unpause Offer", LANG_SERVER);
 			}
 			else if (GetClientTeam(client) == 2 && g_pause_offered_ct == true)
@@ -1145,7 +1187,7 @@ public Action:Unpause(client, args)
 			}
 			else if (GetClientTeam(client) < 2 )
 			{
-				PrintToConsole(client, "<WarMod_BFG> You must be on T or CT to enable /unpause");
+				PrintToConsole(client, "<WarMod> You must be on T or CT to enable /unpause");
 				PrintToChat(client, "\x01 \x09[\x04%s\x09]\x01 %T", CHAT_PREFIX, "Unpause Non-player", LANG_SERVER);
 			}
 		}
@@ -1175,7 +1217,7 @@ public Action:Unpause(client, args)
 			}
 			else if (GetClientTeam(client) < 2 )
 			{
-				PrintToConsole(client, "<WarMod_BFG> You must be on T or CT to enable /unpause");
+				PrintToConsole(client, "<WarMod> You must be on T or CT to enable /unpause");
 				PrintToChat(client, "\x01 \x09[\x04%s\x09]\x01 %T", CHAT_PREFIX, "Unpause Non-player", LANG_SERVER);
 			}
 		}
@@ -1183,7 +1225,7 @@ public Action:Unpause(client, args)
 	else
 	{
 		PrintToChat(client,"\x01 \x09[\x04%s\x09]\x01 %T", CHAT_PREFIX, "Paused Via Rcon", LANG_SERVER);
-		PrintToConsole(client,"<WarMod_BFG> Server is not paused or was paused via rcon");
+		PrintToConsole(client,"<WarMod> Server is not paused or was paused via rcon");
 	}
 }
 
@@ -3769,7 +3811,7 @@ public Action:LiveOn3Text(Handle:timer)
 {
 	PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t", CHAT_PREFIX, "Live");
 	PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t", CHAT_PREFIX, "Good Luck");
-	PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t \x03WarMod [BFG]", CHAT_PREFIX, "Powered By");
+	PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t \x03ZUBAT", CHAT_PREFIX, "Powered By");
 }
 
 public Action:KnifeOn3(client, args)
@@ -3828,7 +3870,7 @@ public Action:KnifeOn3Text(Handle:timer)
 		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 \x02%t", CHAT_PREFIX, "Knife");
 		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 \x02%t", CHAT_PREFIX, "Knife");
 		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t", CHAT_PREFIX, "Good Luck");
-		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t \x03WarMod [BFG]", CHAT_PREFIX, "Powered By");
+		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t \x03ZUBAT", CHAT_PREFIX, "Powered By");
 	}
 	else
 	{
@@ -3836,7 +3878,7 @@ public Action:KnifeOn3Text(Handle:timer)
 		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 \x02%t", CHAT_PREFIX, "Knife");
 		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 \x02%t", CHAT_PREFIX, "Knife");
 		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t", CHAT_PREFIX, "Good Luck");
-		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t \x03WarMod [BFG]", CHAT_PREFIX, "Powered By");
+		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t \x03ZUBAT", CHAT_PREFIX, "Powered By");
 	}
 }
 
@@ -4241,7 +4283,7 @@ DispInfo(client, String:players_unready[], time)
 	new String:Temp[128];
 	SetGlobalTransTarget(client);
 	g_m_ready_up = CreatePanel();
-	Format(Temp, sizeof(Temp), "WarMod [BFG]- %t", "Ready System");
+	Format(Temp, sizeof(Temp), "ZUBAT- %t", "Ready System");
 	SetPanelTitle(g_m_ready_up, Temp);
 	DrawPanelText(g_m_ready_up, "\n \n");
 	Format(Temp, sizeof(Temp), "%t", "Match Begin Msg", GetConVarInt(g_h_min_ready));
@@ -4501,7 +4543,122 @@ public Handler_ReadySystem(Handle:menu, MenuAction:action, param1, param2)
 		}
 	}
 }
+//Knife Vote cherk
+public Action:Cherk(client, args)
+{
+	if ((g_knife_vote) && GetClientTeam(client) == g_knife_winner)
+	{
+		if (g_knife_winner == 2)
+		{
+			PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %s %T", CHAT_PREFIX, g_t_name, "Knife Cherk", LANG_SERVER);
+		}
+		else
+		{
+			PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %s %T", CHAT_PREFIX, g_ct_name, "Knife Cherk", LANG_SERVER);
+		}
+		//Exec Cherk Menu
+		com_ct = Client_GetRandom(3);// Получаем рандомный индекс игрока контров и записываем в переменную
+		com_t = Client_GetRandom(2);// то же только для теров
+		if (com_ct > 0 || com_t > 0)
+		{
+			PrintToChatAll("Капитан %s is %N",g_ct_name, com_ct);// Принт в час всем кто стал капитаном команды
+			PrintToChatAll("Капитан %s is %N",g_t_name, com_t);// Принт в час всем кто стал капитаном команды
+			new ArSize = GetArraySize(hArr);
+			if (g_knife_winner == 2)
+			{
+				if (ArSize%2==0) ShowMyMenu(com_t);// Показываем меню со списком карт капитану T
+				else ShowMyMenu(com_ct);
+			}
+			else
+			{
+				if (ArSize%2==0) ShowMyMenu(com_ct);// Показываем меню со списком карт капитану T
+				else ShowMyMenu(com_t);
+			}
+		
+			
+		}
+		else
+		{
+			PrintToChatAll("Капитан %s is %N",g_ct_name, com_ct);// Принт в час всем кто стал капитаном команды
+			PrintToChatAll("Капитан %s is %N",g_t_name, com_t);// Принт в час всем кто стал капитаном команды
+			PrintToChatAll("ERRORR!!!");
+		}
+			
+		//
+		
+		// show ready system
+		/*ReadyChangeAll(0, false, true);
+		SetAllCancelled(false);
+		ReadySystem(true);
+		ShowInfo(0, true, false, 0);
+		g_knife_winner = 0;
+		g_knife_vote = false;
+		UpdateStatus();*/
+	}
+}
+/*cherk masp begin*/
+ShowMyMenu(client) 
+{
+	new Handle:menu = CreateMenu(Select_Menu);	// Создаем меню 
+	if (GetArraySize(hArr)==1) 
+		SetMenuTitle(menu, "Выберите какую карту играть:\n \n"); // Устанавливаем заголовок меню
+	else
+		SetMenuTitle(menu, "Выберите какую карту убрать:\n \n"); // Устанавливаем заголовок меню
+	new String:sBuffer[32];
+	new String:iBuffer[3];
+	for (new i = 0; i <= GetArraySize(hArr)-1; i++)		// цикл равен количеству индексов в массиве(т.е. наших строк)
+	{
+		GetArrayString(hArr, i, sBuffer, sizeof(sBuffer)); 	// записываем строку в буфер
+		IntToString(i, iBuffer, sizeof(iBuffer));			// переводим Integer в строку
+		AddMenuItem(menu, iBuffer, sBuffer);				// добавляем название карты в меню. в iBuffer записываем индекс строки в массиве
+	}
+	DisplayMenu(menu, client, 0);							// показываем меню игроку
+} 
+public Select_Menu(Handle:menu, MenuAction:action, client, option) 
+{
+	if (action == MenuAction_End)	// если меню закрылось
+	{
+		CloseHandle(menu);		// убиваем хендл
+		return; 
+	}
+	if (action != MenuAction_Select) return; 	// если нажал кнопку
+	decl String:iBuffer[3]; 					// строчка для хранения индекса строки в массиве
+	new String:ter[64]; 
+	new String:cter[64];
+		ter=g_t_name;
+		cter=g_ct_name;
+	GetMenuItem(menu, option, iBuffer, 3); 		// получаем индекса строки в массиве, который записали выше
+	new iArr = StringToInt(iBuffer);			// переводим строку в  Integer 
+	decl String:sArr[32];
+	GetArrayString(hArr, iArr, sArr, sizeof(sArr));	// получаем значение строки в массиве
+	if (GetArraySize(hArr)==1) 
+		PrintToChatAll("Капитан команды %s выбрал карту %s", client==com_t?ter:cter, sArr);
+	else
+		PrintToChatAll("Капитан команды %s вычеркнул карту %s", client==com_t?ter:cter, sArr);
+	
+	if (GetArraySize(hArr)>1)			// если размер массива больше 1 то...
+		RemoveFromArray(hArr, iArr);	// удаляем индекс из массива. (т.е. нашу карту)
+	else								// если размер массива меньше = 1 то...
+	{
+		new Handle:dp;					
+		CreateDataTimer(10.0, ChangeMapCherk, dp);		// созлаем таймер в 10 сек для смены карты
+		PrintToChatAll("Следующая карта через 10 сек: %s",sArr);
+		WritePackString(dp, sArr);					// записываем название карты
+		CloseHandle(menu);							// убиваем хендл
+		return; 
+	}
+	ShowMyMenu(client == com_t ? com_ct : com_t);	// Показываем меню другому игроку
+}
+public Action:ChangeMapCherk(Handle:timer, Handle:dp)	// коллбек таймера
+{
+	decl String:map[32];
+	ResetPack(dp);
+	ReadPackString(dp, map, sizeof(map));			// считываем строку с названием карты
+	ForceChangeLevel(map, "Comandor");				// меняем карту
+	return Plugin_Handled;
+}
 
+/*CHERK MAP END*/
 //Knife vote stay
 public Action:Stay(client, args)
 {
@@ -4964,6 +5121,7 @@ public Action:OnClientSayCommand(client, const String:command[], const String:sA
 	ChatAlias(".score", ShowScore)
 	ChatAlias(".s", ShowScore)
 	ChatAlias(".stay", Stay)
+	ChatAlias(".cherk", Cherk)
 	ChatAlias(".switch", Switch)
 	ChatAlias(".pause", Pause)
 	ChatAlias(".unpause", Unpause)
@@ -5805,7 +5963,7 @@ public Action:ShowPluginInfo(Handle:timer, any:client)
 		new String:min_ready[64];
 		GetConVarName(g_h_min_ready, min_ready, sizeof(min_ready));
 		PrintToConsole(client, "===============================================================================");
-		PrintToConsole(client, "This server is running WarMod [BFG] %s Server Plugin", WM_VERSION);
+		PrintToConsole(client, "This server is running ZUBAT %s Server Plugin", WM_VERSION);
 		PrintToConsole(client, "");
 		PrintToConsole(client, "Created by Versatile [BFG]");
 		PrintToConsole(client, "");
@@ -6347,7 +6505,7 @@ static VetoStatusDisplay(client)
 	new String:Temp[128];
 	SetGlobalTransTarget(client);
 	new Handle:g_m_maps_left = CreatePanel();
-	Format(Temp, sizeof(Temp), "WarMod [BFG]- Veto Maps Left");
+	Format(Temp, sizeof(Temp), "ZUBAT- Veto Maps Left");
 	SetPanelTitle(g_m_maps_left, Temp);
 	DrawPanelText(g_m_maps_left, "\n \n");
 	for (new i = 0; i < GetArraySize(g_MapNames); i++) {
