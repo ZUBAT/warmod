@@ -197,7 +197,7 @@ new	Handle:hArr;	// Хендл для хранения нашего массив
 
 /* Plugin info */
 #define UPDATE_URL				"https://raw.githubusercontent.com/ZUBAT/warmod/master/updatefile.txt"
-#define WM_VERSION				"0.3.6-dev"
+#define WM_VERSION				"0.3.7-dev"
 #define WM_DESCRIPTION			"An automative service for CS:GO competition matches"
 
 public Plugin:myinfo = {
@@ -257,7 +257,9 @@ public OnPluginStart()
 	RegConsoleCmd("name", Name);
 
 	RegConsoleCmd("sm_ready", ReadyUp, "Readies up the client");
+	
 	RegConsoleCmd("sm_r", ReadyUp, "Readies up the client");
+	RegConsoleCmd("sm_R", ReadyUp, "Readies up the client");
 	RegConsoleCmd("sm_rdy", ReadyUp, "Readies up the client");
 	RegConsoleCmd("sm_unready", ReadyDown, "Readies down the client");
 	RegConsoleCmd("sm_ur", ReadyDown, "Readies down the client");
@@ -269,6 +271,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_stay", Stay, "Stay command for knife round");
 	RegConsoleCmd("sm_cherk", Cherk, "Cherk Map command for knife round");
 	RegConsoleCmd("sm_switch", Switch, "Switch command for knife round");
+	RegConsoleCmd("sm_swap", Switch, "Switch command for knife round");
 	RegConsoleCmd("sm_pause", Pause, "Pauses the match");
 	RegConsoleCmd("sm_unpause", Unpause, "Resumes the match");
 
@@ -281,6 +284,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_Veto", Veto_Setup, "Ask for Veto");
 	RegConsoleCmd("sm_vetomaps", Veto_Bo3_Maps, "Veto Bo3 Maps");
 	
+	RegAdminCmd("mix", MixTeams, ADMFLAG_CUSTOM1, "Mix teams");
 	RegAdminCmd("notlive", NotLive, ADMFLAG_CUSTOM1, "Declares half not live and restarts the round");
 	RegAdminCmd("nl", NotLive, ADMFLAG_CUSTOM1, "Declares half not live and restarts the round");
 	RegAdminCmd("cancelhalf", NotLive, ADMFLAG_CUSTOM1, "Declares half not live and restarts the round");
@@ -812,7 +816,15 @@ ResetHalf(bool:silent)
 		ServerCommand("mp_restartgame 1");
 	}
 }
-
+public Action:MixTeams(client, args)
+{
+	PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t", CHAT_PREFIX, "Mix Teams");
+	ServerCommand("mp_scrambleteams");
+	PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t", CHAT_PREFIX, "Mix Teams");
+	ServerCommand("mp_scrambleteams");
+	PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t", CHAT_PREFIX, "Mix Teams");
+	ServerCommand("mp_scrambleteams");
+}
 ResetTeams()
 {
 	// set team names to default
@@ -5112,6 +5124,7 @@ public Action:OnClientSayCommand(client, const String:command[], const String:sA
 {
 	ChatAlias(".ready", ReadyUp)
 	ChatAlias(".r", ReadyUp)
+	ChatAlias(".R", ReadyUp)
 	ChatAlias(".rdy", ReadyUp)
 	ChatAlias(".unready", ReadyDown)
 	ChatAlias(".ur", ReadyDown)
@@ -5123,6 +5136,7 @@ public Action:OnClientSayCommand(client, const String:command[], const String:sA
 	ChatAlias(".stay", Stay)
 	ChatAlias(".cherk", Cherk)
 	ChatAlias(".switch", Switch)
+	ChatAlias(".swap", Switch)
 	ChatAlias(".pause", Pause)
 	ChatAlias(".unpause", Unpause)
 	ChatAlias(".help", DisplayHelp)

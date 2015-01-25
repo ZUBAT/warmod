@@ -1,5 +1,9 @@
 "Phrases"
 {
+	"Mix Teams"
+	{
+		"en"			"WARNING! MIX TEAMS!!"
+	}
 	"Safe Mode"
 	{
 		"en"			"Safe Mode Enabled. Feature is disabled."
