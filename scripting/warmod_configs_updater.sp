@@ -205,7 +205,7 @@ new	Handle:hArr;	// Хендл для хранения нашего массив
 
 /* Plugin info */
 #define UPDATE_URL				"https://raw.githubusercontent.com/ZUBAT/warmod/master/updatefile.txt"
-#define WM_VERSION				"0.4.0"
+#define WM_VERSION				"0.4.1"
 #define WM_DESCRIPTION			"An automative service for CS:GO competition matches"
 
 public Plugin:myinfo = {
@@ -361,7 +361,7 @@ public OnPluginStart()
 	g_h_rcon_only = CreateConVar("wm_rcon_only", "0", "Enable or disable admin commands to be only executed via RCON or console");
 	CreateConVar("wm_version_notify", WM_VERSION, WM_DESCRIPTION, FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 	
-	g_h_chat_prefix = CreateConVar("wm_chat_prefix", "WarMod_ZUBAT", "Change the chat prefix. Default is WarMod_ZUBAT", FCVAR_PROTECTED);
+	g_h_chat_prefix = CreateConVar("wm_chat_prefix", "CW Manager", "Change the chat prefix. Default is [CW Manager]", FCVAR_PROTECTED);
 	g_h_locked = CreateConVar("wm_lock_teams", "1", "Enable or disable locked teams when a match is running", FCVAR_NOTIFY);
 	g_h_min_ready = CreateConVar("wm_min_ready", "10", "Sets the minimum required ready players to Live on 3", FCVAR_NOTIFY);
 	g_h_max_players = CreateConVar("wm_max_players", "10", "Sets the maximum players allowed on both teams combined, others will be forced to spectator (0 = unlimited)", FCVAR_NOTIFY, true, 0.0);
@@ -1248,13 +1248,13 @@ public Action:Unpause(client, args)
 			if (GetClientTeam(client) == 3 && g_pause_offered_ct == false && g_pause_offered_t == false)
 			{
 				g_pause_offered_ct = true;
-				PrintToConsoleAll("<WarMod_ZUBAT> CT have asked to unpause the game. Please type /unpause to unpause the match.");
+				PrintToConsoleAll("<ZUBAT> CT have asked to unpause the game. Please type /unpause to unpause the match.");
 				PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %s %T", CHAT_PREFIX, g_ct_name, "Unpause Offer", LANG_SERVER);
 			}
 			else if (GetClientTeam(client) == 2 && g_pause_offered_t == false && g_pause_offered_ct == false)
 			{
 				g_pause_offered_t = true;
-				PrintToConsoleAll("<WarMod_ZUBAT> T have asked to unpause the game. Please type /unpause to unpause the match.");
+				PrintToConsoleAll("<ZUBAT> T have asked to unpause the game. Please type /unpause to unpause the match.");
 				PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %s %T", CHAT_PREFIX, g_t_name, "Unpause Offer", LANG_SERVER);
 			}
 			else if (GetClientTeam(client) == 2 && g_pause_offered_ct == true)
@@ -1281,7 +1281,7 @@ public Action:Unpause(client, args)
 			}
 			else if (GetClientTeam(client) < 2 )
 			{
-				PrintToConsole(client, "<WarMod_ZUBAT> You must be on T or CT to enable /unpause");
+				PrintToConsole(client, "<ZUBAT> You must be on T or CT to enable /unpause");
 				PrintToChat(client, "\x01 \x09[\x04%s\x09]\x01 %T", CHAT_PREFIX, "Unpause Non-player", LANG_SERVER);
 			}
 		}
@@ -1333,7 +1333,7 @@ public Action:Unpause(client, args)
 			}
 			else if (GetClientTeam(client) < 2 )
 			{
-				PrintToConsole(client, "<WarMod_ZUBAT> You must be on T or CT to enable /unpause");
+				PrintToConsole(client, "<ZUBAT> You must be on T or CT to enable /unpause");
 				PrintToChat(client, "\x01 \x09[\x04%s\x09]\x01 %T", CHAT_PREFIX, "Unpause Non-player", LANG_SERVER);
 			}
 		}
@@ -1341,7 +1341,7 @@ public Action:Unpause(client, args)
 	else
 	{
 		PrintToChat(client,"\x01 \x09[\x04%s\x09]\x01 %T", CHAT_PREFIX, "Paused Via Rcon", LANG_SERVER);
-		PrintToConsole(client,"<WarMod_ZUBAT> Server is not paused or was paused via rcon");
+		PrintToConsole(client,"<ZUBAT> Server is not paused or was paused via rcon");
 	}
 }
 
@@ -1706,7 +1706,7 @@ public Action:ForceAllReady(client, args)
 		}
 		else
 		{
-			PrintToConsole(client, "<WarMod_ZUBAT> %T", "Forced Ready", LANG_SERVER);
+			PrintToConsole(client, "<ZUBAT> %T", "Forced Ready", LANG_SERVER);
 		}
 		
 		// display ready system
@@ -1720,7 +1720,7 @@ public Action:ForceAllReady(client, args)
 		}
 		else
 		{
-			PrintToConsole(client, "<WarMod_ZUBAT> %T", "Ready System Disabled2", LANG_SERVER);
+			PrintToConsole(client, "<ZUBAT> %T", "Ready System Disabled2", LANG_SERVER);
 		}
 	}
 	
@@ -3956,7 +3956,7 @@ public Action:LiveOn3Text(Handle:timer)
 {
 	PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t", CHAT_PREFIX, "Live");
 	PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t", CHAT_PREFIX, "Good Luck");
-	PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t \x03WarMod [ZUBAT]", CHAT_PREFIX, "Powered By");
+	PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t \x03[CW Manager]", CHAT_PREFIX, "Powered By");
 }
 
 public Action:KnifeOn3(client, args)
@@ -4015,7 +4015,7 @@ public Action:KnifeOn3Text(Handle:timer)
 		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 \x02%t", CHAT_PREFIX, "Knife");
 		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 \x02%t", CHAT_PREFIX, "Knife");
 		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t", CHAT_PREFIX, "Good Luck");
-		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t \x03WarMod [ZUBAT]", CHAT_PREFIX, "Powered By");
+		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t \x03WarMod [CW Manager]", CHAT_PREFIX, "Powered By");
 	}
 	else
 	{
@@ -4023,7 +4023,7 @@ public Action:KnifeOn3Text(Handle:timer)
 		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 \x02%t", CHAT_PREFIX, "Knife");
 		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 \x02%t", CHAT_PREFIX, "Knife");
 		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t", CHAT_PREFIX, "Good Luck");
-		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t \x03WarMod [ZUBAT]", CHAT_PREFIX, "Powered By");
+		PrintToChatAll("\x01 \x09[\x04%s\x09]\x01 %t \x03[CW Manager]", CHAT_PREFIX, "Powered By");
 	}
 }
 
@@ -4428,7 +4428,7 @@ DispInfo(client, String:players_unready[], time)
 	new String:Temp[128];
 	SetGlobalTransTarget(client);
 	g_m_ready_up = CreatePanel();
-	Format(Temp, sizeof(Temp), "WarMod [ZUBAT]- %t", "Ready System");
+	Format(Temp, sizeof(Temp), "[CW Manager]- %t", "Ready System");
 	SetPanelTitle(g_m_ready_up, Temp);
 	DrawPanelText(g_m_ready_up, "\n \n");
 	Format(Temp, sizeof(Temp), "%t", "Match Begin Msg", GetConVarInt(g_h_min_ready));
@@ -6155,7 +6155,7 @@ public Action:ShowPluginInfo(Handle:timer, any:client)
 		new String:min_ready[64];
 		GetConVarName(g_h_min_ready, min_ready, sizeof(min_ready));
 		PrintToConsole(client, "===============================================================================");
-		PrintToConsole(client, "This server is running WarMod [ZUBAT] %s Server Plugin", WM_VERSION);
+		PrintToConsole(client, "This server is running [CW Manager] %s Server Plugin", WM_VERSION);
 		PrintToConsole(client, "");
 		PrintToConsole(client, "Created by [ZUBAT]");
 		PrintToConsole(client, "");
@@ -6174,11 +6174,11 @@ public Action:WMVersion(client, args)
 {
 	if (client == 0)
 	{
-		PrintToServer("\"wm_version\" = \"%s\"\n - <WarMod_ZUBAT> %s", WM_VERSION, WM_DESCRIPTION);
+		PrintToServer("\"wm_version\" = \"%s\"\n - <ZUBAT> %s", WM_VERSION, WM_DESCRIPTION);
 	}
 	else
 	{
-		PrintToConsole(client, "\"wm_version\" = \"%s\"\n - <WarMod_ZUBAT> %s", WM_VERSION, WM_DESCRIPTION);
+		PrintToConsole(client, "\"wm_version\" = \"%s\"\n - <ZUBAT> %s", WM_VERSION, WM_DESCRIPTION);
 	}
 	
 	return Plugin_Handled;
@@ -6833,7 +6833,7 @@ static VetoStatusDisplay(client)
 	new String:Temp[128];
 	SetGlobalTransTarget(client);
 	new Handle:g_m_maps_left = CreatePanel();
-	Format(Temp, sizeof(Temp), "WarMod [ZUBAT]- Veto Maps Left");
+	Format(Temp, sizeof(Temp), "[CW Manager]- Veto Maps Left");
 	SetPanelTitle(g_m_maps_left, Temp);
 	DrawPanelText(g_m_maps_left, "\n \n");
 	for (new i = 0; i < GetArraySize(g_MapNames); i++) {
