@@ -1987,7 +1987,7 @@ public Action:ConsoleScore(client, args)
 				PrintToServer("\x01 \x09[\x04%s\x09]\x01 %T:", CHAT_PREFIX, "Match Is Live", LANG_SERVER);
 			}
 		}
-		PrintToConsole(client, "\x01 \x09[\x04%s\x09]\x01  %s: [%d] %s: [%d] MR%d", CHAT_PREFIX, g_t_name, GetTScore(), g_ct_name, GetCTScore(), (GetConVarInt(mp_maxrounds)/2));
+		PrintToConsole(client, "\x01 \x09[\x04%s\x09]\x01  '%s ': [%d] '%s ': [%d] MR%d", CHAT_PREFIX, g_t_name, GetTScore(), g_ct_name, GetCTScore(), (GetConVarInt(mp_maxrounds)/2));
 		if (g_overtime)
 		{
 			PrintToConsole(client, "\x01 \x09[\x04%s\x09]\x01 %t (%d): %s: [%d], %s: [%d] MR%d", CHAT_PREFIX, "Score Overtime", g_overtime_count + 1, g_t_name, GetTOTScore(), g_ct_name, GetCTOTScore(), (GetConVarInt(mp_overtime_maxrounds)/2));
